@@ -11,7 +11,6 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <link rel="icon" type="image/svg+xml" href="https://www.retainful.com/wp-content/uploads/2021/03/retainful-fav-icon.svg">
     <style>
         * {
             margin: 0;
@@ -62,7 +61,7 @@
             font-weight: 700;
             letter-spacing: -0.02em;
             margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #f75a1b 0%, #ffa986 100%);
+            background: linear-gradient(135deg, var(--accent) 0%, #00aaff 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
@@ -351,6 +350,7 @@
         function App() {
             const [emails, setEmails] = useState([]);
             const [validEmails, setValidEmails] = useState([]);
+            const [suppressionEmails, setSuppressionEmails] = useState([]);
             const [processing, setProcessing] = useState(false);
             const [progress, setProgress] = useState({ current: 0, total: 0 });
             const [stats, setStats] = useState({ total: 0, valid: 0, invalid: 0, skipped: 0 });
@@ -392,6 +392,7 @@
                 const startTime = Date.now();
                 const results = [];
                 const newValidEmails = [];
+                const newSuppressionEmails = [];
                 let validCount = 0;
                 let invalidCount = 0;
                 let skippedCount = 0;
@@ -426,11 +427,13 @@
                         results.push(result);
                         if (result.skipped) {
                             skippedCount++;
+                            newSuppressionEmails.push(result.email);
                         } else if (result.valid) {
                             newValidEmails.push(result.email);
                             validCount++;
                         } else {
                             invalidCount++;
+                            newSuppressionEmails.push(result.email);
                         }
                     });
                     
@@ -447,6 +450,7 @@
 
                 setEmails(results);
                 setValidEmails(newValidEmails);
+                setSuppressionEmails(newSuppressionEmails);
                 setStats({
                     total: emailList.length,
                     valid: validCount,
@@ -519,9 +523,21 @@
                 URL.revokeObjectURL(url);
             };
 
+            const downloadSuppressionList = () => {
+                const csv = suppressionEmails.join('\n');
+                const blob = new Blob([csv], { type: 'text/csv' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `suppression-list-${Date.now()}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+            };
+
             const reset = () => {
                 setEmails([]);
                 setValidEmails([]);
+                setSuppressionEmails([]);
                 setStats({ total: 0, valid: 0, invalid: 0, skipped: 0 });
                 setProgress({ current: 0, total: 0 });
                 setMessage('');
@@ -531,7 +547,7 @@
                 <div className="app">
                     <div className="container">
                         <header>
-                            <h1>Email Verifier by Retainful</h1>
+                            <h1>Email Verifier</h1>
                             <p className="subtitle">Upload CSV → Get Clean Valid Emails</p>
                         </header>
 
@@ -591,8 +607,13 @@
                                 {!processing && validEmails.length > 0 && (
                                     <div className="actions">
                                         <button className="btn btn-primary" onClick={downloadValidEmails}>
-                                            ⬇️ Download Valid Emails ({validEmails.length})
+                                            ✅ Download Valid Emails ({validEmails.length})
                                         </button>
+                                        {suppressionEmails.length > 0 && (
+                                            <button className="btn btn-secondary" onClick={downloadSuppressionList}>
+                                                🚫 Download Suppression List ({suppressionEmails.length})
+                                            </button>
+                                        )}
                                         <button className="btn btn-secondary" onClick={reset}>
                                             🔄 Start Over
                                         </button>
