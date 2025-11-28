@@ -224,6 +224,16 @@
             background: var(--surface-hover);
         }
 
+        .btn-danger {
+            background: var(--error);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #ff6666;
+            transform: translateY(-2px);
+        }
+
         .actions {
             display: flex;
             gap: 1rem;
@@ -356,16 +366,18 @@
             const [progress, setProgress] = useState({ current: 0, total: 0 });
             const [stats, setStats] = useState({ total: 0, valid: 0, invalid: 0, skipped: 0 });
             const [message, setMessage] = useState('');
+            const [cancelled, setCancelled] = useState(false);
             const fileInputRef = useRef(null);
+            const abortControllerRef = useRef(null);
 
             const shouldSkipDomain = (email) => {
                 const domain = email.split('@')[1]?.toLowerCase();
                 return SKIP_DOMAINS.includes(domain);
             };
 
-            const verifyEmail = async (email) => {
+            const verifyEmail = async (email, signal) => {
                 try {
-                    const response = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`);
+                    const response = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`, { signal });
                     const result = await response.json();
                     return {
                         email,
@@ -374,6 +386,15 @@
                         success: true
                     };
                 } catch (error) {
+                    if (error.name === 'AbortError') {
+                        return {
+                            email,
+                            valid: false,
+                            reason: 'Cancelled',
+                            success: false,
+                            cancelled: true
+                        };
+                    }
                     return {
                         email,
                         valid: false,
@@ -387,8 +408,13 @@
 
             const processEmails = async (emailList) => {
                 setProcessing(true);
+                setCancelled(false);
                 setProgress({ current: 0, total: emailList.length });
                 setMessage('Starting verification...');
+                
+                // Create new AbortController for this verification session
+                abortControllerRef.current = new AbortController();
+                const signal = abortControllerRef.current.signal;
                 
                 const startTime = Date.now();
                 const results = [];
@@ -398,64 +424,82 @@
                 let invalidCount = 0;
                 let skippedCount = 0;
 
-                for (let i = 0; i < emailList.length; i += BATCH_SIZE) {
-                    const batch = emailList.slice(i, Math.min(i + BATCH_SIZE, emailList.length));
-                    const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-                    const totalBatches = Math.ceil(emailList.length / BATCH_SIZE);
-                    
-                    setMessage(`Processing batch ${batchNum}/${totalBatches} (${batch.length} emails simultaneously)...`);
-                    
-                    const batchPromises = batch.map(async (email) => {
-                        if (shouldSkipDomain(email)) {
-                            return { 
-                                email, 
-                                valid: false, 
-                                reason: 'Domain skipped',
-                                skipped: true 
-                            };
-                        } else {
-                            const result = await verifyEmail(email);
-                            return result;
+                try {
+                    for (let i = 0; i < emailList.length; i += BATCH_SIZE) {
+                        if (signal.aborted) {
+                            setMessage('❌ Verification cancelled by user');
+                            break;
                         }
-                    });
 
-                    const batchResults = await Promise.all(batchPromises);
-                    
-                    batchResults.forEach(result => {
-                        results.push(result);
-                        if (result.skipped) {
-                            skippedCount++;
-                            newSuppressionEmails.push(result.email);
-                        } else if (result.valid) {
-                            newValidEmails.push(result.email);
-                            validCount++;
-                        } else {
-                            invalidCount++;
-                            newSuppressionEmails.push(result.email);
+                        const batch = emailList.slice(i, Math.min(i + BATCH_SIZE, emailList.length));
+                        const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+                        const totalBatches = Math.ceil(emailList.length / BATCH_SIZE);
+                        
+                        setMessage(`Processing batch ${batchNum}/${totalBatches} (${batch.length} emails simultaneously)...`);
+                        
+                        const batchPromises = batch.map(async (email) => {
+                            if (shouldSkipDomain(email)) {
+                                return { 
+                                    email, 
+                                    valid: false, 
+                                    reason: 'Domain skipped',
+                                    skipped: true 
+                                };
+                            } else {
+                                const result = await verifyEmail(email, signal);
+                                return result;
+                            }
+                        });
+
+                        const batchResults = await Promise.all(batchPromises);
+                        
+                        batchResults.forEach(result => {
+                            if (result.cancelled) return; // Skip cancelled results
+                            
+                            results.push(result);
+                            if (result.skipped) {
+                                skippedCount++;
+                                newSuppressionEmails.push(result.email);
+                            } else if (result.valid) {
+                                newValidEmails.push(result.email);
+                                validCount++;
+                            } else {
+                                invalidCount++;
+                                newSuppressionEmails.push(result.email);
+                            }
+                        });
+                        
+                        setProgress({ current: results.length, total: emailList.length });
+                        
+                        if (i + BATCH_SIZE < emailList.length && !signal.aborted) {
+                            await sleep(DELAY_MS);
                         }
-                    });
-                    
-                    setProgress({ current: results.length, total: emailList.length });
-                    
-                    if (i + BATCH_SIZE < emailList.length) {
-                        await sleep(DELAY_MS);
                     }
+
+                    const endTime = Date.now();
+                    const duration = ((endTime - startTime) / 1000).toFixed(1);
+
+                    setEmails(results);
+                    setValidEmails(newValidEmails);
+                    setSuppressionEmails(newSuppressionEmails);
+                    setStats({
+                        total: emailList.length,
+                        valid: validCount,
+                        invalid: invalidCount,
+                        skipped: skippedCount
+                    });
+                    
+                    if (!signal.aborted) {
+                        setMessage(`✅ Verification complete! Processed ${results.length} emails in ${duration}s. Found ${validCount} valid emails.`);
+                    }
+                } catch (error) {
+                    if (error.name !== 'AbortError') {
+                        setMessage(`❌ Error: ${error.message}`);
+                    }
+                } finally {
+                    setProcessing(false);
+                    abortControllerRef.current = null;
                 }
-
-                const endTime = Date.now();
-                const duration = ((endTime - startTime) / 1000).toFixed(1);
-
-                setEmails(results);
-                setValidEmails(newValidEmails);
-                setSuppressionEmails(newSuppressionEmails);
-                setStats({
-                    total: emailList.length,
-                    valid: validCount,
-                    invalid: invalidCount,
-                    skipped: skippedCount
-                });
-                setMessage(`✅ Verification complete! Processed ${emailList.length} emails in ${duration}s. Found ${validCount} valid emails.`);
-                setProcessing(false);
             };
 
             const handleFileUpload = useCallback((file) => {
@@ -531,6 +575,13 @@
                 URL.revokeObjectURL(url);
             };
 
+            const cancelVerification = () => {
+                if (abortControllerRef.current) {
+                    abortControllerRef.current.abort();
+                    setCancelled(true);
+                }
+            };
+
             const reset = () => {
                 setEmails([]);
                 setValidEmails([]);
@@ -599,6 +650,13 @@
                                     <div className="progress-text">
                                         Processing: {progress.current} / {progress.total} emails
                                     </div>
+                                    {processing && (
+                                        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+                                            <button className="btn btn-danger" onClick={cancelVerification}>
+                                                ⛔ Cancel Verification
+                                            </button>
+                                        </div>
+                                    )}
                                 </div>
 
                                 {!processing && validEmails.length > 0 && (
