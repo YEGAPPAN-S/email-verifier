@@ -8,721 +8,551 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@300;400;600;700&display=swap" rel="stylesheet">
     <link rel="icon" type="image/svg+xml" href="https://www.retainful.com/wp-content/uploads/2021/03/retainful-fav-icon.svg">
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        :root {
-            --bg: #0a0a0a;
-            --surface: #141414;
-            --surface-hover: #1a1a1a;
-            --border: #2a2a2a;
-            --text: #ffffff;
-            --text-dim: #888888;
-            --accent: #00ff88;
-            --accent-dim: #00cc6a;
-            --error: #ff4444;
-            --warning: #ffaa00;
-        }
-
-        body {
-            font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
-            background: var(--bg);
-            color: var(--text);
-            line-height: 1.6;
-            overflow-x: hidden;
-        }
-
-        .app {
-            min-height: 100vh;
-            padding: 2rem;
-        }
-
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-            padding-bottom: 2rem;
-            border-bottom: 1px solid var(--border);
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 700;
-            letter-spacing: -0.02em;
-            margin-bottom: 0.5rem;
-            background: linear-gradient(135deg, #f75a1b 0%, #ffa986 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
-
-        .subtitle {
-            color: var(--text-dim);
-            font-size: 1.1rem;
-            font-weight: 300;
-        }
-
-        .upload-zone {
-            background: var(--surface);
-            border: 2px dashed var(--border);
-            border-radius: 16px;
-            padding: 3rem;
-            text-align: center;
-            cursor: pointer;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            margin-bottom: 2rem;
-        }
-
-        .upload-zone:hover {
-            background: var(--surface-hover);
-            border-color: var(--accent);
-            transform: translateY(-2px);
-        }
-
-        .upload-zone.dragover {
-            background: var(--surface-hover);
-            border-color: var(--accent);
-            border-style: solid;
-        }
-
-        .upload-icon {
-            font-size: 3rem;
-            margin-bottom: 1rem;
-            opacity: 0.6;
-        }
-
-        .upload-text {
-            font-size: 1.2rem;
-            margin-bottom: 0.5rem;
-        }
-
-        .upload-hint {
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-
-        input[type="file"] {
-            display: none;
-        }
-
-        .stats {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .stat-card {
-            background: var(--surface);
-            padding: 1.5rem;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-        }
-
-        .stat-label {
-            color: var(--text-dim);
-            font-size: 0.85rem;
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            margin-bottom: 0.5rem;
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            font-family: 'IBM Plex Mono', monospace;
-        }
-
-        .stat-value.valid { color: var(--accent); }
-        .stat-value.invalid { color: var(--error); }
-        .stat-value.skipped { color: var(--warning); }
-
-        .progress-container {
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 2rem;
-            display: none;
-        }
-
-        .progress-container.active {
-            display: block;
-        }
-
-        .progress-bar {
-            width: 100%;
-            height: 8px;
-            background: var(--border);
-            border-radius: 4px;
-            overflow: hidden;
-            margin-bottom: 1rem;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--accent), #00aaff);
-            transition: width 0.3s ease;
-            border-radius: 4px;
-        }
-
-        .progress-text {
-            color: var(--text-dim);
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.9rem;
-        }
-
-        .btn {
-            padding: 1rem 2rem;
-            font-size: 1rem;
-            font-weight: 600;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            font-family: 'Archivo', sans-serif;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .btn-primary {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .btn-primary:hover {
-            background: var(--accent-dim);
-            transform: translateY(-2px);
-        }
-
-        .btn-primary:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-            transform: none;
-        }
-
-        .btn-secondary {
-            background: var(--surface);
-            color: var(--text);
-            border: 1px solid var(--border);
-        }
-
-        .btn-secondary:hover {
-            background: var(--surface-hover);
-        }
-
-        .btn-danger {
-            background: var(--error);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #ff6666;
-            transform: translateY(-2px);
-        }
-
-        .actions {
-            display: flex;
-            gap: 1rem;
-            justify-content: center;
-            flex-wrap: wrap;
-        }
-
-        .email-list {
-            background: var(--surface);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-top: 2rem;
-            max-height: 400px;
-            overflow-y: auto;
-            font-family: 'IBM Plex Mono', monospace;
-            font-size: 0.9rem;
-        }
-
-        .email-list::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .email-list::-webkit-scrollbar-track {
-            background: var(--bg);
-            border-radius: 4px;
-        }
-
-        .email-list::-webkit-scrollbar-thumb {
-            background: var(--border);
-            border-radius: 4px;
-        }
-
-        .email-item {
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            border-radius: 6px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .email-item.valid {
-            background: rgba(0, 255, 136, 0.1);
-            border-left: 3px solid var(--accent);
-        }
-
-        .email-item.invalid {
-            background: rgba(255, 68, 68, 0.1);
-            border-left: 3px solid var(--error);
-        }
-
-        .email-item.skipped {
-            background: rgba(255, 170, 0, 0.1);
-            border-left: 3px solid var(--warning);
-        }
-
-        .status-badge {
-            font-size: 0.75rem;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-        }
-
-        .status-badge.valid {
-            background: var(--accent);
-            color: var(--bg);
-        }
-
-        .status-badge.invalid {
-            background: var(--error);
-            color: white;
-        }
-
-        .status-badge.skipped {
-            background: var(--warning);
-            color: var(--bg);
-        }
-
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.5; }
-        }
-
-        .verifying {
-            animation: pulse 1.5s ease-in-out infinite;
-        }
-
-        footer {
-            text-align: center;
-            margin-top: 4rem;
-            padding-top: 2rem;
-            border-top: 1px solid var(--border);
-            color: var(--text-dim);
-            font-size: 0.9rem;
-        }
-
-        @media (max-width: 768px) {
-            .app {
-                padding: 1rem;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .stats {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+:root {
+    --bg: #0a0a0a; --surface: #141414; --surface-hover: #1a1a1a;
+    --border: #2a2a2a; --text: #ffffff; --text-dim: #888888;
+    --accent: #00ff88; --accent-dim: #00cc6a;
+    --error: #ff4444; --warning: #ffaa00;
+}
+body {
+    font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden;
+}
+.app { min-height: 100vh; padding: 2rem; }
+.container { max-width: 1000px; margin: 0 auto; }
+.login-container {
+    max-width: 400px; margin: 10vh auto; background: var(--surface);
+    padding: 3rem; border-radius: 16px; border: 1px solid var(--border);
+}
+.login-header { text-align: center; margin-bottom: 2rem; }
+.login-header h2 {
+    font-size: 2rem; margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #f75a1b 0%, #ffa986 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.login-form { display: flex; flex-direction: column; gap: 1.5rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.5rem; }
+.form-group label { color: var(--text-dim); font-size: 0.9rem; font-weight: 500; }
+.form-group input {
+    padding: 1rem; background: var(--bg); border: 1px solid var(--border);
+    border-radius: 8px; color: var(--text); font-size: 1rem;
+    font-family: 'Archivo', sans-serif; transition: border-color 0.2s;
+}
+.form-group input:focus { outline: none; border-color: var(--accent); }
+.error-message {
+    color: var(--error); font-size: 0.9rem; text-align: center;
+    padding: 0.75rem; background: rgba(255, 68, 68, 0.1);
+    border-radius: 6px; border: 1px solid rgba(255, 68, 68, 0.3);
+}
+header {
+    text-align: center; margin-bottom: 3rem; padding-bottom: 2rem;
+    border-bottom: 1px solid var(--border); position: relative;
+}
+.logout-btn {
+    position: absolute; top: 0; right: 0; padding: 0.5rem 1rem;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 6px; color: var(--text); cursor: pointer;
+    font-size: 0.9rem; transition: all 0.2s;
+}
+.logout-btn:hover { background: var(--surface-hover); }
+h1 {
+    font-size: 3rem; font-weight: 700; letter-spacing: -0.02em;
+    margin-bottom: 0.5rem;
+    background: linear-gradient(135deg, #f75a1b 0%, #ffa986 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.subtitle { color: var(--text-dim); font-size: 1.1rem; font-weight: 300; }
+.upload-zone {
+    background: var(--surface); border: 2px dashed var(--border);
+    border-radius: 16px; padding: 3rem; text-align: center;
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    margin-bottom: 2rem;
+}
+.upload-zone:hover {
+    background: var(--surface-hover); border-color: var(--accent);
+    transform: translateY(-2px);
+}
+.upload-zone.dragover {
+    background: var(--surface-hover); border-color: var(--accent);
+    border-style: solid;
+}
+.upload-icon { font-size: 3rem; margin-bottom: 1rem; opacity: 0.6; }
+.upload-text { font-size: 1.2rem; margin-bottom: 0.5rem; }
+.upload-hint { color: var(--text-dim); font-size: 0.9rem; }
+input[type="file"] { display: none; }
+.stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+}
+.stat-card {
+    background: var(--surface); padding: 1.5rem; border-radius: 12px;
+    border: 1px solid var(--border);
+}
+.stat-label {
+    color: var(--text-dim); font-size: 0.85rem; text-transform: uppercase;
+    letter-spacing: 0.1em; margin-bottom: 0.5rem;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.stat-value {
+    font-size: 2rem; font-weight: 700;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.stat-value.valid { color: var(--accent); }
+.stat-value.invalid { color: var(--error); }
+.stat-value.skipped { color: var(--warning); }
+.progress-container {
+    background: var(--surface); border-radius: 12px; padding: 1.5rem;
+    margin-bottom: 2rem; display: none;
+}
+.progress-container.active { display: block; }
+.progress-bar {
+    width: 100%; height: 8px; background: var(--border);
+    border-radius: 4px; overflow: hidden; margin-bottom: 1rem;
+}
+.progress-fill {
+    height: 100%; background: linear-gradient(90deg, var(--accent), #00aaff);
+    transition: width 0.3s ease; border-radius: 4px;
+}
+.progress-text {
+    color: var(--text-dim); font-family: 'IBM Plex Mono', monospace;
+    font-size: 0.9rem;
+}
+.btn {
+    padding: 1rem 2rem; font-size: 1rem; font-weight: 600; border: none;
+    border-radius: 8px; cursor: pointer; transition: all 0.2s ease;
+    font-family: 'Archivo', sans-serif; display: inline-flex;
+    align-items: center; gap: 0.5rem;
+}
+.btn-primary { background: var(--accent); color: var(--bg); }
+.btn-primary:hover { background: var(--accent-dim); transform: translateY(-2px); }
+.btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.btn-secondary {
+    background: var(--surface); color: var(--text);
+    border: 1px solid var(--border);
+}
+.btn-secondary:hover { background: var(--surface-hover); }
+.btn-danger { background: var(--error); color: white; }
+.btn-danger:hover { background: #ff6666; transform: translateY(-2px); }
+.actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+.email-list {
+    background: var(--surface); border-radius: 12px; padding: 1.5rem;
+    margin-top: 2rem; max-height: 400px; overflow-y: auto;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem;
+}
+.email-list::-webkit-scrollbar { width: 8px; }
+.email-list::-webkit-scrollbar-track {
+    background: var(--bg); border-radius: 4px;
+}
+.email-list::-webkit-scrollbar-thumb {
+    background: var(--border); border-radius: 4px;
+}
+.email-item {
+    padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 6px;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.email-item.valid {
+    background: rgba(0, 255, 136, 0.1);
+    border-left: 3px solid var(--accent);
+}
+.email-item.invalid {
+    background: rgba(255, 68, 68, 0.1);
+    border-left: 3px solid var(--error);
+}
+.email-item.skipped {
+    background: rgba(255, 170, 0, 0.1);
+    border-left: 3px solid var(--warning);
+}
+.status-badge {
+    font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;
+    font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.status-badge.valid { background: var(--accent); color: var(--bg); }
+.status-badge.invalid { background: var(--error); color: white; }
+.status-badge.skipped { background: var(--warning); color: var(--bg); }
+@keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+.verifying { animation: pulse 1.5s ease-in-out infinite; }
+footer {
+    text-align: center; margin-top: 4rem; padding-top: 2rem;
+    border-top: 1px solid var(--border); color: var(--text-dim);
+    font-size: 0.9rem;
+}
+@media (max-width: 768px) {
+    .app { padding: 1rem; }
+    h1 { font-size: 2rem; }
+    .stats { grid-template-columns: 1fr; }
+}
+</style>
 </head>
 <body>
-    <div id="root"></div>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useCallback, useRef, useEffect } = React;
+const CREDENTIALS = {
+    username: 'Cartrabbit',
+    passwordHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918'
+};
+const SKIP_DOMAINS = ['yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com'];
+const API_URL = 'https://verify.retainful.xyz/verify/';
+const BATCH_SIZE = 100;
+const DELAY_MS = 200;
 
-    <script type="text/babel">
-        const { useState, useCallback, useRef } = React;
+function App() {
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [username, setUsername] = useState('');
+    const [password, setPassword] = useState('');
+    const [loginError, setLoginError] = useState('');
+    const [emails, setEmails] = useState([]);
+    const [csvData, setCsvData] = useState(null);
+    const [validEmails, setValidEmails] = useState([]);
+    const [suppressionEmails, setSuppressionEmails] = useState([]);
+    const [processing, setProcessing] = useState(false);
+    const [progress, setProgress] = useState({ current: 0, total: 0 });
+    const [stats, setStats] = useState({ total: 0, valid: 0, invalid: 0, skipped: 0 });
+    const [message, setMessage] = useState('');
+    const [cancelled, setCancelled] = useState(false);
+    const fileInputRef = useRef(null);
+    const abortControllerRef = useRef(null);
 
-        const SKIP_DOMAINS = ['yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com'];
-        const API_URL = 'https://verify.retainful.xyz/verify/';
-        const BATCH_SIZE = 100;
-        const DELAY_MS = 200;
-
-        function App() {
-            const [emails, setEmails] = useState([]);
-            const [validEmails, setValidEmails] = useState([]);
-            const [suppressionEmails, setSuppressionEmails] = useState([]);
-            const [processing, setProcessing] = useState(false);
-            const [progress, setProgress] = useState({ current: 0, total: 0 });
-            const [stats, setStats] = useState({ total: 0, valid: 0, invalid: 0, skipped: 0 });
-            const [message, setMessage] = useState('');
-            const [cancelled, setCancelled] = useState(false);
-            const fileInputRef = useRef(null);
-            const abortControllerRef = useRef(null);
-
-            const shouldSkipDomain = (email) => {
-                const domain = email.split('@')[1]?.toLowerCase();
-                return SKIP_DOMAINS.includes(domain);
-            };
-
-            const verifyEmail = async (email, signal) => {
-                try {
-                    const response = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`, { signal });
-                    const result = await response.json();
-                    return {
-                        email,
-                        valid: result.valid || false,
-                        reason: result.reason || 'Unknown',
-                        success: true
-                    };
-                } catch (error) {
-                    if (error.name === 'AbortError') {
-                        return {
-                            email,
-                            valid: false,
-                            reason: 'Cancelled',
-                            success: false,
-                            cancelled: true
-                        };
+    useEffect(() => {
+        const session = localStorage.getItem('email_verifier_session');
+        if (session) {
+            try {
+                const { timestamp, hash } = JSON.parse(session);
+                if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
+                    if (hash === CREDENTIALS.passwordHash) {
+                        setIsAuthenticated(true);
                     }
-                    return {
-                        email,
-                        valid: false,
-                        reason: 'Verification failed',
-                        success: false
-                    };
+                } else {
+                    localStorage.removeItem('email_verifier_session');
                 }
-            };
-
-            const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
-
-            const processEmails = async (emailList) => {
-                setProcessing(true);
-                setCancelled(false);
-                setProgress({ current: 0, total: emailList.length });
-                setMessage('Starting verification...');
-                
-                // Create new AbortController for this verification session
-                abortControllerRef.current = new AbortController();
-                const signal = abortControllerRef.current.signal;
-                
-                const startTime = Date.now();
-                const results = [];
-                const newValidEmails = [];
-                const newSuppressionEmails = [];
-                let validCount = 0;
-                let invalidCount = 0;
-                let skippedCount = 0;
-
-                try {
-                    for (let i = 0; i < emailList.length; i += BATCH_SIZE) {
-                        if (signal.aborted) {
-                            setMessage('❌ Verification cancelled by user');
-                            break;
-                        }
-
-                        const batch = emailList.slice(i, Math.min(i + BATCH_SIZE, emailList.length));
-                        const batchNum = Math.floor(i / BATCH_SIZE) + 1;
-                        const totalBatches = Math.ceil(emailList.length / BATCH_SIZE);
-                        
-                        setMessage(`Processing batch ${batchNum}/${totalBatches} (${batch.length} emails simultaneously)...`);
-                        
-                        const batchPromises = batch.map(async (email) => {
-                            if (shouldSkipDomain(email)) {
-                                return { 
-                                    email, 
-                                    valid: false, 
-                                    reason: 'Domain skipped',
-                                    skipped: true 
-                                };
-                            } else {
-                                const result = await verifyEmail(email, signal);
-                                return result;
-                            }
-                        });
-
-                        const batchResults = await Promise.all(batchPromises);
-                        
-                        batchResults.forEach(result => {
-                            if (result.cancelled) return; // Skip cancelled results
-                            
-                            results.push(result);
-                            if (result.skipped) {
-                                skippedCount++;
-                                newSuppressionEmails.push(result.email);
-                            } else if (result.valid) {
-                                newValidEmails.push(result.email);
-                                validCount++;
-                            } else {
-                                invalidCount++;
-                                newSuppressionEmails.push(result.email);
-                            }
-                        });
-                        
-                        setProgress({ current: results.length, total: emailList.length });
-                        
-                        if (i + BATCH_SIZE < emailList.length && !signal.aborted) {
-                            await sleep(DELAY_MS);
-                        }
-                    }
-
-                    const endTime = Date.now();
-                    const duration = ((endTime - startTime) / 1000).toFixed(1);
-
-                    setEmails(results);
-                    setValidEmails(newValidEmails);
-                    setSuppressionEmails(newSuppressionEmails);
-                    setStats({
-                        total: emailList.length,
-                        valid: validCount,
-                        invalid: invalidCount,
-                        skipped: skippedCount
-                    });
-                    
-                    if (!signal.aborted) {
-                        setMessage(`✅ Verification complete! Processed ${results.length} emails in ${duration}s. Found ${validCount} valid emails.`);
-                    }
-                } catch (error) {
-                    if (error.name !== 'AbortError') {
-                        setMessage(`❌ Error: ${error.message}`);
-                    }
-                } finally {
-                    setProcessing(false);
-                    abortControllerRef.current = null;
-                }
-            };
-
-            const handleFileUpload = useCallback((file) => {
-                if (!file) return;
-
-                Papa.parse(file, {
-                    complete: (results) => {
-                        const emailList = [];
-                        results.data.forEach(row => {
-                            if (Array.isArray(row)) {
-                                row.forEach(cell => {
-                                    const email = cell.trim();
-                                    if (email && email.includes('@')) {
-                                        emailList.push(email);
-                                    }
-                                });
-                            } else if (typeof row === 'object') {
-                                Object.values(row).forEach(cell => {
-                                    const email = String(cell).trim();
-                                    if (email && email.includes('@')) {
-                                        emailList.push(email);
-                                    }
-                                });
-                            }
-                        });
-
-                        const uniqueEmails = [...new Set(emailList)];
-                        processEmails(uniqueEmails);
-                    },
-                    header: false,
-                    skipEmptyLines: true
-                });
-            }, []);
-
-            const handleDrop = useCallback((e) => {
-                e.preventDefault();
-                e.currentTarget.classList.remove('dragover');
-                const file = e.dataTransfer.files[0];
-                if (file && (file.name.endsWith('.csv') || file.type === 'text/csv')) {
-                    handleFileUpload(file);
-                }
-            }, [handleFileUpload]);
-
-            const handleDragOver = useCallback((e) => {
-                e.preventDefault();
-                e.currentTarget.classList.add('dragover');
-            }, []);
-
-            const handleDragLeave = useCallback((e) => {
-                e.preventDefault();
-                e.currentTarget.classList.remove('dragover');
-            }, []);
-
-            const downloadValidEmails = () => {
-                const csv = validEmails.join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `valid-emails-${Date.now()}.csv`;
-                a.click();
-                URL.revokeObjectURL(url);
-            };
-
-            const downloadSuppressionList = () => {
-                const csv = suppressionEmails.join('\n');
-                const blob = new Blob([csv], { type: 'text/csv' });
-                const url = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                a.download = `suppression-list-${Date.now()}.csv`;
-                a.click();
-                URL.revokeObjectURL(url);
-            };
-
-            const cancelVerification = () => {
-                if (abortControllerRef.current) {
-                    abortControllerRef.current.abort();
-                    setCancelled(true);
-                }
-            };
-
-            const reset = () => {
-                setEmails([]);
-                setValidEmails([]);
-                setSuppressionEmails([]);
-                setStats({ total: 0, valid: 0, invalid: 0, skipped: 0 });
-                setProgress({ current: 0, total: 0 });
-                setMessage('');
-            };
-
-            return (
-                <div className="app">
-                    <div className="container">
-                        <header>
-                            <h1>Email Verifier by Retainful</h1>
-                            <p className="subtitle">Upload CSV → Get Clean Valid Emails</p>
-                        </header>
-
-                        {!processing && emails.length === 0 && (
-                            <div 
-                                className="upload-zone"
-                                onClick={() => fileInputRef.current?.click()}
-                                onDrop={handleDrop}
-                                onDragOver={handleDragOver}
-                                onDragLeave={handleDragLeave}
-                            >
-                                <div className="upload-icon">📧</div>
-                                <div className="upload-text">Drop your CSV file here</div>
-                                <div className="upload-hint">or click to browse</div>
-                                <input 
-                                    ref={fileInputRef}
-                                    type="file" 
-                                    accept=".csv" 
-                                    onChange={(e) => handleFileUpload(e.target.files[0])}
-                                />
-                            </div>
-                        )}
-
-                        {(processing || emails.length > 0) && (
-                            <>
-                                <div className="stats">
-                                    <div className="stat-card">
-                                        <div className="stat-label">Total</div>
-                                        <div className="stat-value">{stats.total}</div>
-                                    </div>
-                                    <div className="stat-card">
-                                        <div className="stat-label">Valid</div>
-                                        <div className="stat-value valid">{stats.valid}</div>
-                                    </div>
-                                    <div className="stat-card">
-                                        <div className="stat-label">Invalid</div>
-                                        <div className="stat-value invalid">{stats.invalid}</div>
-                                    </div>
-                                    <div className="stat-card">
-                                        <div className="stat-label">Skipped</div>
-                                        <div className="stat-value skipped">{stats.skipped}</div>
-                                    </div>
-                                </div>
-
-                                <div className={`progress-container ${processing ? 'active' : ''}`}>
-                                    <div className="progress-bar">
-                                        <div 
-                                            className="progress-fill" 
-                                            style={{ width: `${(progress.current / progress.total) * 100}%` }}
-                                        />
-                                    </div>
-                                    <div className="progress-text">
-                                        Processing: {progress.current} / {progress.total} emails
-                                    </div>
-                                    {processing && (
-                                        <div style={{ marginTop: '1rem', textAlign: 'center' }}>
-                                            <button className="btn btn-danger" onClick={cancelVerification}>
-                                                ⛔ Cancel Verification
-                                            </button>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {!processing && validEmails.length > 0 && (
-                                    <div className="actions">
-                                        <button className="btn btn-primary" onClick={downloadValidEmails}>
-                                            ✅ Download Valid Emails ({validEmails.length})
-                                        </button>
-                                        {suppressionEmails.length > 0 && (
-                                            <button className="btn btn-secondary" onClick={downloadSuppressionList}>
-                                                🚫 Download Suppression List ({suppressionEmails.length})
-                                            </button>
-                                        )}
-                                        <button className="btn btn-secondary" onClick={reset}>
-                                            🔄 Start Over
-                                        </button>
-                                    </div>
-                                )}
-
-                                {emails.length > 0 && (
-                                    <div className="email-list">
-                                        {emails.slice(0, 100).map((item, index) => (
-                                            <div 
-                                                key={index} 
-                                                className={`email-item ${item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}
-                                            >
-                                                <span>{item.email}</span>
-                                                <span className={`status-badge ${item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
-                                                    {item.skipped ? 'Skipped' : item.valid ? 'Valid' : 'Invalid'}
-                                                </span>
-                                            </div>
-                                        ))}
-                                        {emails.length > 100 && (
-                                            <div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-dim)' }}>
-                                                ... and {emails.length - 100} more
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </>
-                        )}
-
-                        {message && (
-                            <div style={{
-                                background: 'var(--surface)',
-                                padding: '1rem 1.5rem',
-                                borderRadius: '8px',
-                                marginTop: '2rem',
-                                textAlign: 'center',
-                                fontFamily: 'IBM Plex Mono, monospace',
-                                fontSize: '0.9rem',
-                                border: '1px solid var(--border)',
-                                color: processing ? 'var(--text-dim)' : 'var(--accent)'
-                            }}>
-                                {message}
-                            </div>
-                        )}
-
-                        <footer>
-                            Built by Yega • Powered by Retainful API
-                        </footer>
-                    </div>
-                </div>
-            );
+            } catch (e) {
+                localStorage.removeItem('email_verifier_session');
+            }
         }
+    }, []);
 
-        ReactDOM.render(<App />, document.getElementById('root'));
-    </script>
+    const handleLogin = (e) => {
+        e.preventDefault();
+        setLoginError('');
+        const enteredPasswordHash = CryptoJS.SHA256(password).toString();
+        if (username === CREDENTIALS.username && enteredPasswordHash === CREDENTIALS.passwordHash) {
+            setIsAuthenticated(true);
+            localStorage.setItem('email_verifier_session', JSON.stringify({
+                timestamp: Date.now(),
+                hash: enteredPasswordHash
+            }));
+            setPassword('');
+        } else {
+            setLoginError('Invalid username or password');
+        }
+    };
+
+    const handleLogout = () => {
+        setIsAuthenticated(false);
+        localStorage.removeItem('email_verifier_session');
+        setUsername('');
+        setPassword('');
+        reset();
+    };
+
+    const shouldSkipDomain = (email) => {
+        const domain = email.split('@')[1]?.toLowerCase();
+        return SKIP_DOMAINS.includes(domain);
+    };
+
+    const verifyEmail = async (email, signal) => {
+        try {
+            const response = await fetch(`${API_URL}?email=${encodeURIComponent(email)}`, { signal });
+            const result = await response.json();
+            return {
+                email,
+                valid: result.valid || false,
+                reason: result.reason || 'Unknown',
+                success: true
+            };
+        } catch (error) {
+            if (error.name === 'AbortError') {
+                return { email, valid: false, reason: 'Cancelled', success: false, cancelled: true };
+            }
+            return { email, valid: false, reason: 'Verification failed', success: false };
+        }
+    };
+
+    const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+
+    const findEmailColumn = (headers) => {
+        const emailIndex = headers.findIndex(h => 
+            h && (h.toLowerCase().includes('email') || h.toLowerCase().includes('e-mail'))
+        );
+        if (emailIndex !== -1) return emailIndex;
+        return -1;
+    };
+
+    const processEmails = async (csvRows, emailColumnIndex, headers) => {
+        setProcessing(true);
+        setCancelled(false);
+        setProgress({ current: 0, total: csvRows.length });
+        setMessage('Starting verification...');
+        abortControllerRef.current = new AbortController();
+        const signal = abortControllerRef.current.signal;
+        const startTime = Date.now();
+        const results = [];
+        const newValidEmails = [];
+        const newSuppressionEmails = [];
+        let validCount = 0, invalidCount = 0, skippedCount = 0;
+
+        try {
+            for (let i = 0; i < csvRows.length; i += BATCH_SIZE) {
+                if (signal.aborted) {
+                    setMessage('❌ Verification cancelled by user');
+                    break;
+                }
+                const batch = csvRows.slice(i, Math.min(i + BATCH_SIZE, csvRows.length));
+                const batchNum = Math.floor(i / BATCH_SIZE) + 1;
+                const totalBatches = Math.ceil(csvRows.length / BATCH_SIZE);
+                setMessage(`Processing batch ${batchNum}/${totalBatches} (${batch.length} emails simultaneously)...`);
+                
+                const batchPromises = batch.map(async (row) => {
+                    const email = row[emailColumnIndex].trim().toLowerCase();
+                    if (shouldSkipDomain(email)) {
+                        return { ...row, email, valid: false, reason: 'Domain skipped', skipped: true };
+                    } else {
+                        const result = await verifyEmail(email, signal);
+                        return { ...row, ...result };
+                    }
+                });
+
+                const batchResults = await Promise.all(batchPromises);
+                batchResults.forEach(result => {
+                    if (result.cancelled) return;
+                    results.push(result);
+                    if (result.skipped) {
+                        skippedCount++;
+                        newSuppressionEmails.push(result);
+                    } else if (result.valid) {
+                        newValidEmails.push(result);
+                        validCount++;
+                    } else {
+                        invalidCount++;
+                        newSuppressionEmails.push(result);
+                    }
+                });
+                setProgress({ current: results.length, total: csvRows.length });
+                if (i + BATCH_SIZE < csvRows.length && !signal.aborted) {
+                    await sleep(DELAY_MS);
+                }
+            }
+
+            const endTime = Date.now();
+            const duration = ((endTime - startTime) / 1000).toFixed(1);
+            setEmails(results);
+            setValidEmails(newValidEmails);
+            setSuppressionEmails(newSuppressionEmails);
+            setStats({ total: csvRows.length, valid: validCount, invalid: invalidCount, skipped: skippedCount });
+            if (!signal.aborted) {
+                setMessage(`✅ Verification complete! Processed ${results.length} emails in ${duration}s. Found ${validCount} valid emails.`);
+            }
+        } catch (error) {
+            if (error.name !== 'AbortError') {
+                setMessage(`❌ Error: ${error.message}`);
+            }
+        } finally {
+            setProcessing(false);
+            abortControllerRef.current = null;
+        }
+    };
+
+    const handleFileUpload = useCallback((file) => {
+        if (!file) return;
+        Papa.parse(file, {
+            complete: (results) => {
+                if (results.data.length < 2) {
+                    setMessage('❌ CSV file is empty or invalid');
+                    return;
+                }
+                const headers = results.data[0];
+                const dataRows = results.data.slice(1).filter(row => 
+                    row.some(cell => cell && cell.toString().trim() !== '')
+                );
+                const emailColumnIndex = findEmailColumn(headers);
+                if (emailColumnIndex === -1) {
+                    setMessage('❌ Could not find email column in CSV');
+                    return;
+                }
+                setCsvData({ headers, rows: dataRows, emailColumnIndex });
+                const validRows = dataRows.filter(row => {
+                    const email = row[emailColumnIndex];
+                    return email && email.toString().includes('@');
+                });
+                processEmails(validRows, emailColumnIndex, headers);
+            },
+            header: false,
+            skipEmptyLines: true
+        });
+    }, []);
+
+    const handleDrop = useCallback((e) => {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+        const file = e.dataTransfer.files[0];
+        if (file && (file.name.endsWith('.csv') || file.type === 'text/csv')) {
+            handleFileUpload(file);
+        }
+    }, [handleFileUpload]);
+
+    const handleDragOver = useCallback((e) => {
+        e.preventDefault();
+        e.currentTarget.classList.add('dragover');
+    }, []);
+
+    const handleDragLeave = useCallback((e) => {
+        e.preventDefault();
+        e.currentTarget.classList.remove('dragover');
+    }, []);
+
+    const downloadValidEmails = () => {
+        const headers = [...csvData.headers, 'Valid', 'Verification Reason', 'Verified At'];
+        const rows = validEmails.map(row => {
+            const originalData = csvData.headers.map((_, idx) => row[idx] || '');
+            return [...originalData, 'TRUE', row.reason, new Date().toISOString()];
+        });
+        const csv = Papa.unparse({ fields: headers, data: rows });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `valid-emails-${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const downloadSuppressionList = () => {
+        const headers = [...csvData.headers, 'Valid', 'Verification Reason', 'Verified At'];
+        const rows = suppressionEmails.map(row => {
+            const originalData = csvData.headers.map((_, idx) => row[idx] || '');
+            return [...originalData, 'FALSE', row.reason, new Date().toISOString()];
+        });
+        const csv = Papa.unparse({ fields: headers, data: rows });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `suppression-list-${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
+    const cancelVerification = () => {
+        if (abortControllerRef.current) {
+            abortControllerRef.current.abort();
+            setCancelled(true);
+        }
+    };
+
+    const reset = () => {
+        setEmails([]);
+        setValidEmails([]);
+        setSuppressionEmails([]);
+        setCsvData(null);
+        setStats({ total: 0, valid: 0, invalid: 0, skipped: 0 });
+        setProgress({ current: 0, total: 0 });
+        setMessage('');
+    };
+
+    if (!isAuthenticated) {
+        return (
+            <div className="app">
+                <div className="login-container">
+                    <div className="login-header">
+                        <h2>🔐 Email Verifier</h2>
+                        <p style={{ color: 'var(--text-dim)', fontSize: '0.9rem', marginTop: '0.5rem' }}>
+                            Login to continue
+                        </p>
+                    </div>
+                    <form className="login-form" onSubmit={handleLogin}>
+                        {loginError && (<div className="error-message">{loginError}</div>)}
+                        <div className="form-group">
+                            <label>Username</label>
+                            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" required />
+                        </div>
+                        <div className="form-group">
+                            <label>Password</label>
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" required />
+                        </div>
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Login</button>
+                    </form>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="app">
+            <div className="container">
+                <header>
+                    <button className="logout-btn" onClick={handleLogout}>Logout</button>
+                    <h1>Email Verifier by Retainful</h1>
+                    <p className="subtitle">Upload CSV → Get Clean Valid Emails</p>
+                </header>
+                {!processing && emails.length === 0 && (
+                    <div className="upload-zone" onClick={() => fileInputRef.current?.click()} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
+                        <div className="upload-icon">📧</div>
+                        <div className="upload-text">Drop your CSV file here</div>
+                        <div className="upload-hint">Supports: name, email, company, etc.</div>
+                        <input ref={fileInputRef} type="file" accept=".csv" onChange={(e) => handleFileUpload(e.target.files[0])} />
+                    </div>
+                )}
+                {(processing || emails.length > 0) && (
+                    <>
+                        <div className="stats">
+                            <div className="stat-card"><div className="stat-label">Total</div><div className="stat-value">{stats.total}</div></div>
+                            <div className="stat-card"><div className="stat-label">Valid</div><div className="stat-value valid">{stats.valid}</div></div>
+                            <div className="stat-card"><div className="stat-label">Invalid</div><div className="stat-value invalid">{stats.invalid}</div></div>
+                            <div className="stat-card"><div className="stat-label">Skipped</div><div className="stat-value skipped">{stats.skipped}</div></div>
+                        </div>
+                        <div className={`progress-container ${processing ? 'active' : ''}`}>
+                            <div className="progress-bar">
+                                <div className="progress-fill" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
+                            </div>
+                            <div className="progress-text">Processing: {progress.current} / {progress.total} emails</div>
+                            {processing && (<div style={{ marginTop: '1rem', textAlign: 'center' }}><button className="btn btn-danger" onClick={cancelVerification}>⛔ Cancel Verification</button></div>)}
+                        </div>
+                        {!processing && validEmails.length > 0 && (
+                            <div className="actions">
+                                <button className="btn btn-primary" onClick={downloadValidEmails}>✅ Download Valid Emails ({validEmails.length})</button>
+                                {suppressionEmails.length > 0 && (<button className="btn btn-secondary" onClick={downloadSuppressionList}>🚫 Download Suppression List ({suppressionEmails.length})</button>)}
+                                <button className="btn btn-secondary" onClick={reset}>🔄 Start Over</button>
+                            </div>
+                        )}
+                        {emails.length > 0 && (
+                            <div className="email-list">
+                                {emails.slice(0, 100).map((item, index) => (
+                                    <div key={index} className={`email-item ${item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
+                                        <span>{item.email}</span>
+                                        <span className={`status-badge ${item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
+                                            {item.skipped ? 'Skipped' : item.valid ? 'Valid' : 'Invalid'}
+                                        </span>
+                                    </div>
+                                ))}
+                                {emails.length > 100 && (<div style={{ textAlign: 'center', padding: '1rem', color: 'var(--text-dim)' }}>... and {emails.length - 100} more</div>)}
+                            </div>
+                        )}
+                    </>
+                )}
+                {message && (<div style={{ background: 'var(--surface)', padding: '1rem 1.5rem', borderRadius: '8px', marginTop: '2rem', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.9rem', border: '1px solid var(--border)', color: processing ? 'var(--text-dim)' : 'var(--accent)' }}>{message}</div>)}
+                <footer>Built by Yega • Powered by Retainful API</footer>
+            </div>
+        </div>
+    );
+}
+ReactDOM.render(<App />, document.getElementById('root'));
+</script>
 </body>
 </html>
