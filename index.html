@@ -8,7 +8,6 @@
     <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
     <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Archivo:wght@300;400;600;700&display=swap" rel="stylesheet">
@@ -194,10 +193,13 @@ footer {
 <div id="root"></div>
 <script type="text/babel">
 const { useState, useCallback, useRef, useEffect } = React;
+
+// Login credentials (plain text - change these)
 const CREDENTIALS = {
     username: 'Cartrabbit',
-    passwordHash: 'e42WMPgyKuYDSg2kP4Kb2LWMIcEe6zeA6ntvA3T8RR0='
+    password: 'e@z0KnCeFVUZJ6&@gTyFd5pT'
 };
+
 const SKIP_DOMAINS = ['yahoo.com', 'outlook.com', 'hotmail.com', 'aol.com'];
 const API_URL = 'https://verify.retainful.xyz/verify/';
 const BATCH_SIZE = 100;
@@ -224,11 +226,9 @@ function App() {
         const session = localStorage.getItem('email_verifier_session');
         if (session) {
             try {
-                const { timestamp, hash } = JSON.parse(session);
-                if (Date.now() - timestamp < 24 * 60 * 60 * 1000) {
-                    if (hash === CREDENTIALS.passwordHash) {
-                        setIsAuthenticated(true);
-                    }
+                const { timestamp, authenticated } = JSON.parse(session);
+                if (Date.now() - timestamp < 24 * 60 * 60 * 1000 && authenticated) {
+                    setIsAuthenticated(true);
                 } else {
                     localStorage.removeItem('email_verifier_session');
                 }
@@ -241,12 +241,12 @@ function App() {
     const handleLogin = (e) => {
         e.preventDefault();
         setLoginError('');
-        const enteredPasswordHash = CryptoJS.SHA256(password).toString();
-        if (username === CREDENTIALS.username && enteredPasswordHash === CREDENTIALS.passwordHash) {
+
+        if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
             setIsAuthenticated(true);
             localStorage.setItem('email_verifier_session', JSON.stringify({
                 timestamp: Date.now(),
-                hash: enteredPasswordHash
+                authenticated: true
             }));
             setPassword('');
         } else {
@@ -480,11 +480,11 @@ function App() {
                         {loginError && (<div className="error-message">{loginError}</div>)}
                         <div className="form-group">
                             <label>Username</label>
-                            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" required />
+                            <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="Enter username" required autoComplete="username" />
                         </div>
                         <div className="form-group">
                             <label>Password</label>
-                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" required />
+                            <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" required autoComplete="current-password" />
                         </div>
                         <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Login</button>
                     </form>
