@@ -18,14 +18,14 @@
     --bg: #0a0a0a; --surface: #141414; --surface-hover: #1a1a1a;
     --border: #2a2a2a; --text: #ffffff; --text-dim: #888888;
     --accent: #00ff88; --accent-dim: #00cc6a;
-    --error: #ff4444; --warning: #ffaa00;
+    --error: #ff4444; --warning: #ffaa00; --info: #00aaff;
 }
 body {
     font-family: 'Archivo', -apple-system, BlinkMacSystemFont, sans-serif;
     background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden;
 }
 .app { min-height: 100vh; padding: 2rem; }
-.container { max-width: 1000px; margin: 0 auto; }
+.container { max-width: 1400px; margin: 0 auto; }
 .login-container {
     max-width: 400px; margin: 10vh auto; background: var(--surface);
     padding: 3rem; border-radius: 16px; border: 1px solid var(--border);
@@ -87,7 +87,7 @@ h1 {
 .upload-hint { color: var(--text-dim); font-size: 0.9rem; }
 input[type="file"] { display: none; }
 .stats {
-    display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
     gap: 1rem; margin-bottom: 2rem;
 }
 .stat-card {
@@ -106,6 +106,61 @@ input[type="file"] { display: none; }
 .stat-value.valid { color: var(--accent); }
 .stat-value.invalid { color: var(--error); }
 .stat-value.skipped { color: var(--warning); }
+.stat-value.duplicate { color: var(--info); }
+.stat-value.info { color: var(--info); }
+.analysis-section {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.5rem; margin-bottom: 2rem;
+}
+.analysis-card {
+    background: var(--surface); padding: 2rem; border-radius: 12px;
+    border: 1px solid var(--border); max-height: 500px; overflow-y: auto;
+}
+.analysis-card::-webkit-scrollbar { width: 6px; }
+.analysis-card::-webkit-scrollbar-track { background: var(--bg); border-radius: 3px; }
+.analysis-card::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+.analysis-title {
+    font-size: 1.25rem; font-weight: 600; margin-bottom: 1.5rem;
+    color: var(--text); display: flex; align-items: center; gap: 0.75rem;
+}
+.domain-group {
+    margin-bottom: 1.5rem; padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border);
+}
+.domain-group:last-child { border-bottom: none; }
+.domain-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 0.75rem; padding: 0.75rem; background: var(--bg);
+    border-radius: 8px; cursor: pointer; transition: all 0.2s;
+}
+.domain-header:hover { background: var(--surface-hover); }
+.domain-name {
+    font-family: 'IBM Plex Mono', monospace; font-size: 1rem;
+    color: var(--accent); font-weight: 600;
+}
+.domain-count {
+    background: var(--accent); color: var(--bg); padding: 0.25rem 0.75rem;
+    border-radius: 12px; font-weight: 700; font-size: 0.9rem;
+    font-family: 'IBM Plex Mono', monospace;
+}
+.domain-emails {
+    margin-top: 0.5rem; padding-left: 1rem;
+}
+.domain-email-item {
+    padding: 0.5rem; margin-bottom: 0.25rem; border-radius: 4px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.85rem;
+    background: rgba(0, 255, 136, 0.05); color: var(--text-dim);
+    border-left: 2px solid var(--accent);
+}
+.duplicate-item {
+    padding: 0.75rem; margin-bottom: 0.5rem; border-radius: 6px;
+    background: rgba(0, 170, 255, 0.1); border-left: 3px solid var(--info);
+    font-family: 'IBM Plex Mono', monospace; font-size: 0.9rem;
+}
+.duplicate-email { color: var(--text); font-weight: 600; margin-bottom: 0.25rem; }
+.duplicate-count {
+    color: var(--text-dim); font-size: 0.8rem;
+}
 .progress-container {
     background: var(--surface); border-radius: 12px; padding: 1.5rem;
     margin-bottom: 2rem; display: none;
@@ -168,6 +223,10 @@ input[type="file"] { display: none; }
     background: rgba(255, 170, 0, 0.1);
     border-left: 3px solid var(--warning);
 }
+.email-item.duplicate {
+    background: rgba(0, 170, 255, 0.1);
+    border-left: 3px solid var(--info);
+}
 .status-badge {
     font-size: 0.75rem; padding: 0.25rem 0.5rem; border-radius: 4px;
     font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
@@ -175,6 +234,7 @@ input[type="file"] { display: none; }
 .status-badge.valid { background: var(--accent); color: var(--bg); }
 .status-badge.invalid { background: var(--error); color: white; }
 .status-badge.skipped { background: var(--warning); color: var(--bg); }
+.status-badge.duplicate { background: var(--info); color: white; }
 @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 .verifying { animation: pulse 1.5s ease-in-out infinite; }
 footer {
@@ -182,10 +242,13 @@ footer {
     border-top: 1px solid var(--border); color: var(--text-dim);
     font-size: 0.9rem;
 }
+@media (max-width: 1024px) {
+    .analysis-section { grid-template-columns: 1fr; }
+}
 @media (max-width: 768px) {
     .app { padding: 1rem; }
     h1 { font-size: 2rem; }
-    .stats { grid-template-columns: 1fr; }
+    .stats { grid-template-columns: 1fr 1fr; }
 }
 </style>
 </head>
@@ -194,7 +257,6 @@ footer {
 <script type="text/babel">
 const { useState, useCallback, useRef, useEffect } = React;
 
-// Login credentials (plain text - change these)
 const CREDENTIALS = {
     username: 'Cartrabbit',
     password: 'e@z0KnCeFVUZJ6&@gTyFd5pT'
@@ -214,9 +276,12 @@ function App() {
     const [csvData, setCsvData] = useState(null);
     const [validEmails, setValidEmails] = useState([]);
     const [suppressionEmails, setSuppressionEmails] = useState([]);
+    const [duplicateEmails, setDuplicateEmails] = useState([]);
+    const [domainGroups, setDomainGroups] = useState({});
+    const [duplicateGroups, setDuplicateGroups] = useState({});
     const [processing, setProcessing] = useState(false);
     const [progress, setProgress] = useState({ current: 0, total: 0 });
-    const [stats, setStats] = useState({ total: 0, valid: 0, invalid: 0, skipped: 0 });
+    const [stats, setStats] = useState({ total: 0, valid: 0, invalid: 0, skipped: 0, duplicates: 0 });
     const [message, setMessage] = useState('');
     const [cancelled, setCancelled] = useState(false);
     const fileInputRef = useRef(null);
@@ -241,7 +306,6 @@ function App() {
     const handleLogin = (e) => {
         e.preventDefault();
         setLoginError('');
-
         if (username === CREDENTIALS.username && password === CREDENTIALS.password) {
             setIsAuthenticated(true);
             localStorage.setItem('email_verifier_session', JSON.stringify({
@@ -300,13 +364,20 @@ function App() {
         setCancelled(false);
         setProgress({ current: 0, total: csvRows.length });
         setMessage('Starting verification...');
+        
         abortControllerRef.current = new AbortController();
         const signal = abortControllerRef.current.signal;
+        
         const startTime = Date.now();
         const results = [];
         const newValidEmails = [];
         const newSuppressionEmails = [];
-        let validCount = 0, invalidCount = 0, skippedCount = 0;
+        const newDuplicateEmails = [];
+        const seenEmails = {};
+        const domains = {};
+        const duplicates = {};
+        
+        let validCount = 0, invalidCount = 0, skippedCount = 0, duplicateCount = 0;
 
         try {
             for (let i = 0; i < csvRows.length; i += BATCH_SIZE) {
@@ -314,6 +385,7 @@ function App() {
                     setMessage('❌ Verification cancelled by user');
                     break;
                 }
+                
                 const batch = csvRows.slice(i, Math.min(i + BATCH_SIZE, csvRows.length));
                 const batchNum = Math.floor(i / BATCH_SIZE) + 1;
                 const totalBatches = Math.ceil(csvRows.length / BATCH_SIZE);
@@ -321,6 +393,33 @@ function App() {
                 
                 const batchPromises = batch.map(async (row) => {
                     const email = row[emailColumnIndex].trim().toLowerCase();
+                    const domain = email.split('@')[1];
+                    
+                    // Track domain groups
+                    if (!domains[domain]) {
+                        domains[domain] = [];
+                    }
+                    domains[domain].push(email);
+                    
+                    // Check for duplicates
+                    if (seenEmails[email]) {
+                        // Track duplicate groups
+                        if (!duplicates[email]) {
+                            duplicates[email] = 1;
+                        }
+                        duplicates[email]++;
+                        
+                        return { 
+                            ...row, 
+                            email, 
+                            valid: false, 
+                            reason: 'Duplicate email',
+                            duplicate: true 
+                        };
+                    }
+                    
+                    seenEmails[email] = true;
+                    
                     if (shouldSkipDomain(email)) {
                         return { ...row, email, valid: false, reason: 'Domain skipped', skipped: true };
                     } else {
@@ -330,10 +429,17 @@ function App() {
                 });
 
                 const batchResults = await Promise.all(batchPromises);
+                
                 batchResults.forEach(result => {
                     if (result.cancelled) return;
+                    
                     results.push(result);
-                    if (result.skipped) {
+                    
+                    if (result.duplicate) {
+                        duplicateCount++;
+                        newDuplicateEmails.push(result);
+                        newSuppressionEmails.push(result);
+                    } else if (result.skipped) {
                         skippedCount++;
                         newSuppressionEmails.push(result);
                     } else if (result.valid) {
@@ -344,7 +450,9 @@ function App() {
                         newSuppressionEmails.push(result);
                     }
                 });
+                
                 setProgress({ current: results.length, total: csvRows.length });
+                
                 if (i + BATCH_SIZE < csvRows.length && !signal.aborted) {
                     await sleep(DELAY_MS);
                 }
@@ -352,12 +460,33 @@ function App() {
 
             const endTime = Date.now();
             const duration = ((endTime - startTime) / 1000).toFixed(1);
+            
+            // Sort domains by email count
+            const sortedDomains = Object.entries(domains)
+                .map(([domain, emailList]) => ({ domain, emails: emailList, count: emailList.length }))
+                .sort((a, b) => b.count - a.count);
+            
+            const domainGroupsObj = {};
+            sortedDomains.forEach(item => {
+                domainGroupsObj[item.domain] = item.emails;
+            });
+            
             setEmails(results);
             setValidEmails(newValidEmails);
             setSuppressionEmails(newSuppressionEmails);
-            setStats({ total: csvRows.length, valid: validCount, invalid: invalidCount, skipped: skippedCount });
+            setDuplicateEmails(newDuplicateEmails);
+            setDomainGroups(domainGroupsObj);
+            setDuplicateGroups(duplicates);
+            setStats({ 
+                total: csvRows.length, 
+                valid: validCount, 
+                invalid: invalidCount, 
+                skipped: skippedCount,
+                duplicates: duplicateCount
+            });
+            
             if (!signal.aborted) {
-                setMessage(`✅ Verification complete! Processed ${results.length} emails in ${duration}s. Found ${validCount} valid emails.`);
+                setMessage(`✅ Verification complete! Processed ${results.length} emails in ${duration}s. Found ${validCount} valid, ${duplicateCount} duplicates.`);
             }
         } catch (error) {
             if (error.name !== 'AbortError') {
@@ -449,6 +578,22 @@ function App() {
         URL.revokeObjectURL(url);
     };
 
+    const downloadDuplicates = () => {
+        const headers = [...csvData.headers, 'Valid', 'Verification Reason', 'Verified At'];
+        const rows = duplicateEmails.map(row => {
+            const originalData = csvData.headers.map((_, idx) => row[idx] || '');
+            return [...originalData, 'FALSE', 'Duplicate email', new Date().toISOString()];
+        });
+        const csv = Papa.unparse({ fields: headers, data: rows });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `duplicate-emails-${Date.now()}.csv`;
+        a.click();
+        URL.revokeObjectURL(url);
+    };
+
     const cancelVerification = () => {
         if (abortControllerRef.current) {
             abortControllerRef.current.abort();
@@ -460,8 +605,11 @@ function App() {
         setEmails([]);
         setValidEmails([]);
         setSuppressionEmails([]);
+        setDuplicateEmails([]);
+        setDomainGroups({});
+        setDuplicateGroups({});
         setCsvData(null);
-        setStats({ total: 0, valid: 0, invalid: 0, skipped: 0 });
+        setStats({ total: 0, valid: 0, invalid: 0, skipped: 0, duplicates: 0 });
         setProgress({ current: 0, total: 0 });
         setMessage('');
     };
@@ -486,7 +634,7 @@ function App() {
                             <label>Password</label>
                             <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter password" required autoComplete="current-password" />
                         </div>
-                        <button type="submit" className="btn btn-primary" style={{ justifyContent: 'center' , width: '100%' }}>Login</button>
+                        <button type="submit" className="btn btn-primary" style={{ width: '100%' }}>Login</button>
                     </form>
                 </div>
             </div>
@@ -501,6 +649,7 @@ function App() {
                     <h1>Email Verifier by Retainful</h1>
                     <p className="subtitle">Upload CSV → Get Clean Valid Emails</p>
                 </header>
+                
                 {!processing && emails.length === 0 && (
                     <div className="upload-zone" onClick={() => fileInputRef.current?.click()} onDrop={handleDrop} onDragOver={handleDragOver} onDragLeave={handleDragLeave}>
                         <div className="upload-icon">📧</div>
@@ -509,6 +658,7 @@ function App() {
                         <input ref={fileInputRef} type="file" accept=".csv" onChange={(e) => handleFileUpload(e.target.files[0])} />
                     </div>
                 )}
+                
                 {(processing || emails.length > 0) && (
                     <>
                         <div className="stats">
@@ -516,7 +666,52 @@ function App() {
                             <div className="stat-card"><div className="stat-label">Valid</div><div className="stat-value valid">{stats.valid}</div></div>
                             <div className="stat-card"><div className="stat-label">Invalid</div><div className="stat-value invalid">{stats.invalid}</div></div>
                             <div className="stat-card"><div className="stat-label">Skipped</div><div className="stat-value skipped">{stats.skipped}</div></div>
+                            <div className="stat-card"><div className="stat-label">Duplicates</div><div className="stat-value duplicate">{stats.duplicates}</div></div>
+                            <div className="stat-card"><div className="stat-label">Unique Domains</div><div className="stat-value info">{Object.keys(domainGroups).length}</div></div>
                         </div>
+
+                        {!processing && Object.keys(domainGroups).length > 0 && (
+                            <div className="analysis-section">
+                                <div className="analysis-card">
+                                    <div className="analysis-title">📊 Emails by Domain</div>
+                                    {Object.entries(domainGroups).map(([domain, emailList], idx) => (
+                                        <div key={idx} className="domain-group">
+                                            <div className="domain-header">
+                                                <span className="domain-name">{domain}</span>
+                                                <span className="domain-count">{emailList.length}</span>
+                                            </div>
+                                            <div className="domain-emails">
+                                                {emailList.slice(0, 5).map((email, i) => (
+                                                    <div key={i} className="domain-email-item">{email}</div>
+                                                ))}
+                                                {emailList.length > 5 && (
+                                                    <div style={{ padding: '0.5rem', color: 'var(--text-dim)', fontSize: '0.8rem' }}>
+                                                        ... and {emailList.length - 5} more emails
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div className="analysis-card">
+                                    <div className="analysis-title">🔄 Duplicate Emails</div>
+                                    {Object.keys(duplicateGroups).length === 0 ? (
+                                        <div style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-dim)' }}>
+                                            No duplicates found! 🎉
+                                        </div>
+                                    ) : (
+                                        Object.entries(duplicateGroups).map(([email, count], idx) => (
+                                            <div key={idx} className="duplicate-item">
+                                                <div className="duplicate-email">{email}</div>
+                                                <div className="duplicate-count">Appeared {count} times in CSV</div>
+                                            </div>
+                                        ))
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         <div className={`progress-container ${processing ? 'active' : ''}`}>
                             <div className="progress-bar">
                                 <div className="progress-fill" style={{ width: `${(progress.current / progress.total) * 100}%` }} />
@@ -524,20 +719,23 @@ function App() {
                             <div className="progress-text">Processing: {progress.current} / {progress.total} emails</div>
                             {processing && (<div style={{ marginTop: '1rem', textAlign: 'center' }}><button className="btn btn-danger" onClick={cancelVerification}>⛔ Cancel Verification</button></div>)}
                         </div>
+
                         {!processing && validEmails.length > 0 && (
                             <div className="actions">
                                 <button className="btn btn-primary" onClick={downloadValidEmails}>✅ Download Valid Emails ({validEmails.length})</button>
                                 {suppressionEmails.length > 0 && (<button className="btn btn-secondary" onClick={downloadSuppressionList}>🚫 Download Suppression List ({suppressionEmails.length})</button>)}
+                                {duplicateEmails.length > 0 && (<button className="btn btn-secondary" onClick={downloadDuplicates}>🔄 Download Duplicates ({duplicateEmails.length})</button>)}
                                 <button className="btn btn-secondary" onClick={reset}>🔄 Start Over</button>
                             </div>
                         )}
+
                         {emails.length > 0 && (
                             <div className="email-list">
                                 {emails.slice(0, 100).map((item, index) => (
-                                    <div key={index} className={`email-item ${item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
+                                    <div key={index} className={`email-item ${item.duplicate ? 'duplicate' : item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
                                         <span>{item.email}</span>
-                                        <span className={`status-badge ${item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
-                                            {item.skipped ? 'Skipped' : item.valid ? 'Valid' : 'Invalid'}
+                                        <span className={`status-badge ${item.duplicate ? 'duplicate' : item.skipped ? 'skipped' : item.valid ? 'valid' : 'invalid'}`}>
+                                            {item.duplicate ? 'Duplicate' : item.skipped ? 'Skipped' : item.valid ? 'Valid' : 'Invalid'}
                                         </span>
                                     </div>
                                 ))}
@@ -546,7 +744,9 @@ function App() {
                         )}
                     </>
                 )}
+                
                 {message && (<div style={{ background: 'var(--surface)', padding: '1rem 1.5rem', borderRadius: '8px', marginTop: '2rem', textAlign: 'center', fontFamily: 'IBM Plex Mono, monospace', fontSize: '0.9rem', border: '1px solid var(--border)', color: processing ? 'var(--text-dim)' : 'var(--accent)' }}>{message}</div>)}
+                
                 <footer>Built by Yega • Powered by Retainful API</footer>
             </div>
         </div>
